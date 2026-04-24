@@ -1,0 +1,366 @@
+{
+  "name": "AI Job Finder",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 3,
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4012630b-91dd-49d9-85a0-864099593421",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google_jobs"
+            },
+            {
+              "name": "q",
+              "value": "AI ML Engineer Hyderabad"
+            },
+            {
+              "name": "api_key",
+              "value": "71b7c6c3dc5a073e8312b65afed9eba524d52f10476695653dbe01ad720212cc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "4be514b3-9c96-4488-92c1-51a045611ef1",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const jobs = $input.first().json.jobs_results;\n\nreturn jobs.map(job => ({\n  json: {\n    title: job.title,\n    company: job.company_name,\n    location: job.location,\n    description: job.description,\n    link: job.related_links?.[0]?.link || '',\n    posted: job.detected_extensions?.posted_at || ''\n  }\n}));// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "24610028-078a-4e43-9ddd-c7c57e44187a",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a job matcher for an AI/ML Engineer with 3-5 years experience.\n\nAnalyze this job and give a match score out of 100:\n\nJob Title: {{ $json.title }}\nCompany: {{ $json.company }}\nLocation: {{ $json.location }}\nDescription: {{ $json.description }}\n\nReturn in this format:\n- Match Score: X/100\n- Key Skills Required: \n- Why it matches:\n- Apply Link: {{ $json.link }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "c71aa0e5-7c5a-4696-a900-d8b084efb47f",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        496,
+        208
+      ],
+      "id": "6be45d7f-fc2e-48da-80bd-9f5182425a31",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "mjNJGII3IJEmvKse",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2c89e44a-838d-4156-bf4c-75d6732cc13f",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "Match Score: 9",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "3d687157-c48c-44bd-a2c5-5ac98ee704ce",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "Match Score: 8",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        863,
+        0
+      ],
+      "id": "5e396be1-13e0-4bef-b7fd-6b83d192e024",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "13yuTVSx5ywptqpmdvo22NrKfoOj0z4EeDS70pS_2VKg",
+          "mode": "list",
+          "cachedResultName": "Job Applications",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13yuTVSx5ywptqpmdvo22NrKfoOj0z4EeDS70pS_2VKg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1761523129,
+          "mode": "list",
+          "cachedResultName": "Sheet2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13yuTVSx5ywptqpmdvo22NrKfoOj0z4EeDS70pS_2VKg/edit#gid=1761523129"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Company": "={{ $json.company }}",
+            "Job Title": "={{ $json.title }}",
+            "Location": "={{ $json.location }}",
+            "Salary": "Not mentioned",
+            "Apply Link": "={{ $json.link }}",
+            "AI Analysis": "={{ $json.output }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Job Title",
+              "displayName": "Job Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Salary",
+              "displayName": "Salary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Apply Link",
+              "displayName": "Apply Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Analysis",
+              "displayName": "AI Analysis",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1072,
+        -96
+      ],
+      "id": "2c529fda-03d8-4d0d-9e4c-a10bc753b640",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "jcB9fCx4LcNLhuBf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "1933184306",
+        "text": "=🤖 High Match Job Found!\n\n{{ $json['AI Analysis'].replace(/[*_`\\[\\]()]/g, '') }}\n\n📅 Date: {{ $now.toFormat('dd/MM/yyyy') }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1280,
+        -96
+      ],
+      "id": "c2360eb9-3b0e-48bc-ae1d-db121e31cac2",
+      "name": "Send a text message",
+      "webhookId": "bfdcab9e-9895-4f6d-ade4-2926415f10d5",
+      "credentials": {
+        "telegramApi": {
+          "id": "7HvLvlITz3EUAF4w",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e52f2bd9-3c2c-437e-a7e2-09789eb61b9c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ac77daa5db75ebedf5b564e02ebf6c8c41799cb01795e90dc50abf3c074daef5"
+  },
+  "id": "iM8TXEmeTOgj8tKp",
+  "tags": []
+}
