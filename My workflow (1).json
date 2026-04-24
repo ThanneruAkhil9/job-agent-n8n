@@ -1,0 +1,294 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            },
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "bf94c234-70ea-46b9-bce0-3c8629dc9719",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 10,
+        "filters": {
+          "q": "job"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        176,
+        0
+      ],
+      "id": "531806a5-2c33-496d-a377-05e02a156de9",
+      "name": "Get many messages",
+      "webhookId": "11cbce94-689c-4387-9133-158dd5401952",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mQeuWH4T7PG1GMN4",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Email Content: {{ $json.snippet }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        496,
+        16
+      ],
+      "id": "f0123e7b-69ed-450a-b019-c09c69e3523b",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "waitBetweenTries": 5
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "13yuTVSx5ywptqpmdvo22NrKfoOj0z4EeDS70pS_2VKg",
+          "mode": "list",
+          "cachedResultName": "Job Applications",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13yuTVSx5ywptqpmdvo22NrKfoOj0z4EeDS70pS_2VKg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13yuTVSx5ywptqpmdvo22NrKfoOj0z4EeDS70pS_2VKg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Company": "={{ $json.output }}",
+            "Job Title": "="
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Job Title",
+              "displayName": "Job Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Salary",
+              "displayName": "Salary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Apply Link",
+              "displayName": "Apply Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        832,
+        16
+      ],
+      "id": "ce67c114-237b-441b-8f96-49a6f1caf4fe",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "jcB9fCx4LcNLhuBf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        336,
+        16
+      ],
+      "id": "8543dc48-b985-46a4-89ea-a25e0f884a5f",
+      "name": "Wait",
+      "webhookId": "a2e137ec-3091-40d0-8c4d-e36041f54bba"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        432,
+        208
+      ],
+      "id": "7e9e4bfe-d19b-47bd-a611-a120aa841f73",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "mjNJGII3IJEmvKse",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "1933184306",
+        "text": "=🔔 New Job Alert!\n\n{{ $json.Company.replace(/[*_`\\[\\]()]/g, '') }}\n\n📅 Date: {{ $now.toFormat('dd/MM/yyyy') }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        32
+      ],
+      "id": "f02ae30a-5947-4b79-93eb-2d031d6c3664",
+      "name": "Send a text message",
+      "webhookId": "91bc6646-f8df-42ec-8761-52b61ab17e04",
+      "credentials": {
+        "telegramApi": {
+          "id": "7HvLvlITz3EUAF4w",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many messages": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "73519843-526b-40e4-b867-bf22763d1d9c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ac77daa5db75ebedf5b564e02ebf6c8c41799cb01795e90dc50abf3c074daef5"
+  },
+  "id": "B22CxXbGKqiLiR2K",
+  "tags": []
+}
